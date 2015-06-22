@@ -14,27 +14,32 @@ var Feed = React.createClass({displayName: 'Feed',
         var ref = new Firebase('https://rjvoteit.firebaseIO.com/feed');
         ref.on('value', function(snap) {
             var items = [];
+            var sorted = [];
 
             snap.forEach(function(itemSnap) {
                 var item = itemSnap.val();
                 item.key = itemSnap.name();
-
                 items.push(item);
             });
 
-            this.setState({
-                items: items
+            sorted = _.sortBy(items, function(item) {
+                return -item.voteCount;
             });
+
+            this.setState({
+                items: sorted
+            });
+
         }.bind(this));
     },
 
     componentDidMount: function() {
         this.loadData();
     },
+
     getInitialState: function() {
-        var FEED_ITEMS = [];
         return {
-            items: FEED_ITEMS,
+            items: [],
             formDisplayed: false
         }
     },
@@ -51,16 +56,8 @@ var Feed = React.createClass({displayName: 'Feed',
     },
 
     onVote: function(item) {
-        var items = _.uniq(this.state.items);
-        var index = _.findIndex(items, function(feedItems) {
-            return feedItems.key === item.key;
-        });
-        var oldObj = items[index];
-        var newItems = _.pull(items, oldObj);
-        newItems.push(item);
-        this.setState({
-            items: newItems
-        });
+        var ref = new Firebase('https://rjvoteit.firebaseIO.com/feed').child(item.key);
+        ref.update(item);
     },
 
     render: function() {
