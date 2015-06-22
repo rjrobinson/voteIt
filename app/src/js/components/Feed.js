@@ -5,26 +5,33 @@ var ShowAddButton = require('./ShowAddButton');
 var FeedForm = require('./FeedForm');
 var FeedList = require('./FeedList');
 var _ = require('lodash');
+var Firebase = require('firebase');
 
 var Feed = React.createClass({
 
+    loadData: function() {
+        var ref = new Firebase('https://rjvoteit.firebaseIO.com/feed');
+        ref.on('value', function(snap) {
+            var items = [];
+
+            snap.forEach(function(itemSnap) {
+                var item = itemSnap.val();
+                item.key = itemSnap.name();
+
+                items.push(item);
+            });
+
+            this.setState({
+                items: items
+            });
+        }.bind(this));
+    },
+
+    componentDidMount: function() {
+        this.loadData();
+    },
     getInitialState: function() {
-        var FEED_ITEMS = [{
-            key: '1',
-            title: 'Realtime data!',
-            description: 'Firebase is cool',
-            voteCount: 49
-        }, {
-            key: '2',
-            title: 'JavaScript is fun',
-            description: 'Lexical scoping FTW',
-            voteCount: 34
-        }, {
-            key: '3',
-            title: 'Coffee makes you awake',
-            description: 'Drink responsibly',
-            voteCount: 15
-        }, ];
+        var FEED_ITEMS = [];
         return {
             items: FEED_ITEMS,
             formDisplayed: false
@@ -38,12 +45,8 @@ var Feed = React.createClass({
     },
 
     onNewItem: function(newItem) {
-        var newItems = this.state.items.concat([newItem]);
-        this.setState({
-            items: newItems,
-            formDisplayed: false,
-            key: this.state.items.length
-        });
+        var ref = new Firebase('https://rjvoteit.firebaseIO.com/feed');
+        ref.push(newItem);
     },
 
     onVote: function(item) {
